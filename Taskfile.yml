@@ -1,0 +1,13 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  api-gen:
+    cmds:
+      - go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=./docs/config.yaml ./docs/openapi.json
+    silent: true
+  run:
+     cmds:
+      - go run cmd/bot/main.go
+     silent: true
