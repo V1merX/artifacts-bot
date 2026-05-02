@@ -99,7 +99,7 @@ A bot that automates character management in Artifacts MMO: moves to target loca
 
 ### Requirements
 
-- Go 1.22+
+- Go 1.26+
 - An account on [artifactsmmo.com](https://artifactsmmo.com)
 - [Task](https://taskfile.dev) (optional, for convenient running)
 
