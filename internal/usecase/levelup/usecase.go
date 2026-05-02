@@ -25,37 +25,55 @@ func New(gw Gateway, logger *zap.Logger) *UseCase {
 	return &UseCase{gw: gw, logger: logger}
 }
 
-func (uc *UseCase) Run(ctx context.Context, characterName string, targetLevel int) error {
-	// Move to spawn
+func (uc *UseCase) MoveToSpawn(ctx context.Context, characterName string) error {
 	moveToSpawnResult, err := uc.gw.Move(ctx, characterName, 0, 0)
 	if err != nil {
-		uc.logger.Error("Failed to move to spawn", zap.Error(err))
+		uc.logger.Error("The character is already at the destination", zap.String("character_name", characterName))
 	}
 
-	if err := moveToSpawnResult.Cooldown.Wait(ctx); err != nil {
-		return err
+	if moveToSpawnResult != nil {
+		if err := moveToSpawnResult.Cooldown.Wait(ctx); err != nil {
+			return err
+		}
 	}
 
-	uc.logger.Info("Move to spawn ended", zap.Int("cooldown_seconds", moveToSpawnResult.Cooldown.TotalSeconds))
+	uc.logger.Info("Move character to spawn ended", zap.String("character_name", characterName))
 
+	return nil
+}
+
+func (uc *UseCase) MoveForFight(ctx context.Context, characterName string) error {
 	moveResult, err := uc.gw.Move(ctx, characterName, 0, 1)
 	if err != nil {
 		return err
 	}
 
-	if moveResult.Character.NeedsRest() {
-		return errors.New("HP below 50% before fight loop started")
+	if moveResult != nil {
+		if moveResult.Character.NeedsRest() {
+			return errors.New("HP below 50% before fight loop started")
+		}
+
+		if err := moveResult.Cooldown.Wait(ctx); err != nil {
+			return err
+		}
 	}
 
-	if err := moveResult.Cooldown.Wait(ctx); err != nil {
-		return err
-	}
-
-	uc.logger.Info("Move ended",
-		zap.Int("cooldown_seconds", moveResult.Cooldown.TotalSeconds),
+	uc.logger.Info("Move character for fight ended",
 		zap.Int("x", 0),
 		zap.Int("y", 1),
 	)
+
+	return nil
+}
+
+func (uc *UseCase) Run(ctx context.Context, characterName string, targetLevel int) error {
+	if err := uc.MoveToSpawn(ctx, characterName); err != nil {
+		return err
+	}
+
+	if err := uc.MoveForFight(ctx, characterName); err != nil {
+		return err
+	}
 
 	for {
 		select {
@@ -99,4 +117,8 @@ func (uc *UseCase) Run(ctx context.Context, characterName string, targetLevel in
 			return nil
 		}
 	}
+}
+
+func (uc *UseCase) PeekBestBoss(characters *[]character.Character, bosses []string) {
+
 }

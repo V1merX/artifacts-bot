@@ -30,7 +30,7 @@ func (a *app) Run(ctx context.Context) error {
 		return err
 	}
 
-	botName := "Bot_2"
+	botName := "Bot_1"
 	targetLevel := 2
 
 	character, err := a.di.ArtifactsGateway().GetCharacter(gracefulCtx, botName)
